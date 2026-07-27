@@ -1,0 +1,120 @@
+{
+  "name": "keshava-language",
+  "displayName": "Keshava Language",
+  "description": "Syntax highlighting, snippets, file icons, and run commands for Keshava .msm files.",
+  "version": "0.1.0",
+  "publisher": "keshava",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://example.com/keshava-language"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "files": [
+    "extension.js",
+    "language-configuration.json",
+    "README.md",
+    "LICENSE",
+    "icons/**",
+    "runtime/**",
+    "snippets/**",
+    "syntaxes/**"
+  ],
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:keshava",
+    "onCommand:keshava.runFile",
+    "onCommand:keshava.runFileWithInput"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "keshava",
+        "aliases": [
+          "Keshava",
+          "keshava"
+        ],
+        "extensions": [
+          ".msm"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/keshava-file.svg",
+          "dark": "./icons/keshava-file.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "keshava",
+        "scopeName": "source.keshava",
+        "path": "./syntaxes/keshava.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "keshava",
+        "path": "./snippets/keshava.code-snippets"
+      }
+    ],
+    "commands": [
+      {
+        "command": "keshava.runFile",
+        "title": "Keshava: Run Current File"
+      },
+      {
+        "command": "keshava.runFileWithInput",
+        "title": "Keshava: Run Current File With Input"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "keshava.runFile",
+          "when": "resourceExtname == .msm",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "keshava.runFile",
+          "when": "resourceExtname == .msm",
+          "group": "navigation"
+        },
+        {
+          "command": "keshava.runFileWithInput",
+          "when": "resourceExtname == .msm",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Keshava",
+      "properties": {
+        "keshava.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Python executable used to run Keshava files."
+        },
+        "keshava.runtimePath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional path to main.py. Leave empty to use the runtime bundled with this extension."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.0.0"
+  }
+}
