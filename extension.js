@@ -1,4 +1,6 @@
 const path = require("path");
+const fs = require("fs");
+const childProcess = require("child_process");
 const vscode = require("vscode");
 
 function quote(value) {
@@ -13,8 +15,68 @@ function getRuntimePath(context) {
   return path.join(context.extensionPath, "runtime", "main.py");
 }
 
-function getPythonPath() {
-  return vscode.workspace.getConfiguration("keshava").get("pythonPath") || "python";
+function commandExists(command, args = ["--version"]) {
+  try {
+    childProcess.execFileSync(command, args, {
+      encoding: "utf8",
+      stdio: "ignore",
+      timeout: 5000
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getWorkspaceFolderPath(document) {
+  const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+  return folder ? folder.uri.fsPath : path.dirname(document.fileName);
+}
+
+function getPythonCommand(document) {
+  const configured = vscode.workspace.getConfiguration("keshava").get("pythonPath");
+  if (configured && configured.trim() && configured.trim().toLowerCase() !== "auto") {
+    return { executable: configured.trim(), args: [] };
+  }
+
+  const workspacePath = getWorkspaceFolderPath(document);
+  const candidates = [];
+
+  if (process.platform === "win32") {
+    candidates.push(
+      { executable: path.join(workspacePath, ".venv", "Scripts", "python.exe"), args: [] },
+      { executable: "py", args: ["-3"] },
+      { executable: "python", args: [] }
+    );
+  } else {
+    candidates.push(
+      { executable: path.join(workspacePath, ".venv", "bin", "python"), args: [] },
+      { executable: "python3", args: [] },
+      { executable: "python", args: [] }
+    );
+  }
+
+  for (const candidate of candidates) {
+    if (candidate.executable.includes(path.sep) && !fs.existsSync(candidate.executable)) {
+      continue;
+    }
+    if (commandExists(candidate.executable, [...candidate.args, "--version"])) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+function buildTerminalCommand(pythonCommand, runtimePath, documentPath, inputValues) {
+  const parts = [
+    quote(pythonCommand.executable),
+    ...pythonCommand.args.map(quote),
+    quote(runtimePath),
+    quote(documentPath),
+    ...inputValues.map(quote)
+  ];
+  return parts.join(" ");
 }
 
 async function getKeshavaDocument() {
@@ -50,9 +112,17 @@ async function runCurrentFile(context, inputValues = []) {
 
   const terminal = vscode.window.createTerminal("Keshava");
   const runtimePath = getRuntimePath(context);
-  const args = [quote(runtimePath), quote(document.fileName), ...inputValues.map(quote)].join(" ");
+  const pythonCommand = getPythonCommand(document);
+
+  if (!pythonCommand) {
+    vscode.window.showErrorMessage(
+      "Python was not found. Install Python, or set Keshava: Python Path in VS Code settings."
+    );
+    return;
+  }
+
   terminal.show();
-  terminal.sendText(`${quote(getPythonPath())} ${args}`);
+  terminal.sendText(buildTerminalCommand(pythonCommand, runtimePath, document.fileName, inputValues));
 }
 
 async function runCurrentFileWithInput(context) {
