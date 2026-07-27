@@ -100,8 +100,8 @@
       "properties": {
         "keshava.pythonPath": {
           "type": "string",
-          "default": "python",
-          "description": "Python executable used to run Keshava files."
+          "default": "auto",
+          "description": "Python executable used to run Keshava files. Use auto to detect .venv, py, python3, or python."
         },
         "keshava.runtimePath": {
           "type": "string",
